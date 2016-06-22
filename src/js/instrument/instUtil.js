@@ -133,7 +133,6 @@ function genInitParamsCode(initParams) {
 
 function applyASTHandler(instResult, astHandler, sandbox, metadata) {
     if (astHandler && instResult.instAST) {
-        console.log("**** applyASTHandler, metadata:", metadata);
         var info = astHandler(instResult.instAST, instResult, metadata);
         if (info) {
             instResult.code = sandbox.Constants.JALANGI_VAR + ".ast_info = " + JSON.stringify(info) + ";\n" + instResult.code;
