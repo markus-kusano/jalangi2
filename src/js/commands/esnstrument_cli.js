@@ -99,7 +99,7 @@ if (typeof J$ === 'undefined') {
                 console.log(src);
                 throw e;
             }
-            instUtil.applyASTHandler(instCodeAndData, astHandler, sandbox);
+            instUtil.applyASTHandler(instCodeAndData, astHandler, sandbox, metadata);
             fs.writeFileSync(path.join(outDir, origname), src, "utf8");
             fs.writeFileSync(makeSMapFileName(path.join(outDir, instname)), instCodeAndData.sourceMapString, "utf8");
             fs.writeFileSync(path.join(outDir, instname), instCodeAndData.code, "utf8");
@@ -188,6 +188,11 @@ if (typeof J$ === 'undefined') {
 
         var inlineRewriter = rewriteInlineScript(astHandler);
         if (fileName.endsWith(".js")) {
+            var metadata = {
+                type: 'script',
+                inline: false,
+                url: fileName
+            };
             instCodeAndData = instrumentCode(
                 {
                     code: origCode,
@@ -198,7 +203,7 @@ if (typeof J$ === 'undefined') {
                     inlineSource: inlineSource,
                     url: url
                 });
-            instUtil.applyASTHandler(instCodeAndData, astHandler, sandbox);
+            instUtil.applyASTHandler(instCodeAndData, astHandler, sandbox, metadata);
             fs.writeFileSync(makeSMapFileName(instFileName), instCodeAndData.sourceMapString, "utf8");
             fs.writeFileSync(instFileName, instCodeAndData.code, "utf8");
         } else {
