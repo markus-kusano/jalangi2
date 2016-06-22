@@ -99,7 +99,7 @@ if (typeof J$ === 'undefined') {
                 console.log(src);
                 throw e;
             }
-            instUtil.applyASTHandler(instCodeAndData, astHandler, sandbox, metadata);
+            instCodeAndData.code = instUtil.applyASTHandler(instCodeAndData, astHandler, sandbox, metadata);
             fs.writeFileSync(path.join(outDir, origname), src, "utf8");
             fs.writeFileSync(makeSMapFileName(path.join(outDir, instname)), instCodeAndData.sourceMapString, "utf8");
             fs.writeFileSync(path.join(outDir, instname), instCodeAndData.code, "utf8");
@@ -203,7 +203,7 @@ if (typeof J$ === 'undefined') {
                     inlineSource: inlineSource,
                     url: url
                 });
-            instUtil.applyASTHandler(instCodeAndData, astHandler, sandbox, metadata);
+            instCodeAndData.code = instUtil.applyASTHandler(instCodeAndData, astHandler, sandbox, metadata);
             fs.writeFileSync(makeSMapFileName(instFileName), instCodeAndData.sourceMapString, "utf8");
             fs.writeFileSync(instFileName, instCodeAndData.code, "utf8");
         } else {
@@ -213,6 +213,7 @@ if (typeof J$ === 'undefined') {
             try {
                 var jalangiRoot = getJalangiRoot();
                 var rewriteOptions = {
+                    onBeforeNodeVisited: htmlVisitor.preVisitor,
                     onNodeVisited: function (node) {
                         var newNode;
 
