@@ -24,6 +24,9 @@ var fs = require('fs');
 var path = require('path');
 var urlParser = require('url');
 
+// ID tag attached to scripts added by Jalangi to the page
+// Added to property data-jal-id.
+var jalangiId = 0;
 
 var headerSources = ["node_modules/esotope/esotope.js",
     "node_modules/acorn/dist/acorn.js"];
@@ -43,17 +46,31 @@ function setHeaders() {
     }
 }
 
+// Get a script open string with a fresh jalangi ID
+// If src is defined it will be the src attribute in the tag
+function getScriptOpenWithId(src) {
+  console.log("****** getting script ID ******");
+  var fresh = jalangiId;
+  jalangiId++;
+  var ret = "<script data-jal-id= \"" + fresh + "\" type=\"text/javascript\"";
+  if (src) {
+    ret += " src=\"" + src +"\"";
+  }
+  ret += "/>";
+  return ret;
+}
 
 function getInlinedScripts(analyses, initParams, extraAppScripts, EXTRA_SCRIPTS_DIR, jalangiRoot, cdn) {
     if (!headerCode) {
         if (cdn) {
-            headerCode += "<script type=\"text/javascript\" src=\"" + cdn + "/jalangi.js\"></script>";
+            var s =  cdn + "/jalangi.js";
+            headerCode += getScriptOpenWithId(s);
         } else {
             headerSources.forEach(function (src) {
                 if (jalangiRoot) {
                     src = path.join(jalangiRoot, src);
                 }
-                headerCode += "<script type=\"text/javascript\">";
+                headerCode += getScriptOpenWithId();
                 headerCode += fs.readFileSync(src);
                 headerCode += "</script>";
             });
@@ -65,11 +82,12 @@ function getInlinedScripts(analyses, initParams, extraAppScripts, EXTRA_SCRIPTS_
                 headerCode += initParamsCode;
             }
             if (cdn) {
-                headerCode += "<script type=\"text/javascript\" src=\"" + cdn + "/analyses.js\"></script>";
+                var s =  cdn + "/analyses.js";
+                headerCode += getScriptOpenWithId(s);
             } else {
                 analyses.forEach(function (src) {
                     src = path.resolve(src);
-                    headerCode += "<script type=\"text/javascript\">";
+                    headerCode += getScriptOpenWithId();
                     headerCode += fs.readFileSync(src);
                     headerCode += "</script>";
                 });
@@ -80,11 +98,12 @@ function getInlinedScripts(analyses, initParams, extraAppScripts, EXTRA_SCRIPTS_
             // we need to inject script tags for the extra app scripts,
             // which have been copied into the app directory
             if (cdn) {
-                headerCode += "<script type=\"text/javascript\" src=\"" + cdn + "/extras.js\"></script>";
+                var s = cdn + "/extras.js";
+                headerCode += getScriptOpenWithId(s);
             } else {
                 extraAppScripts.forEach(function (script) {
                     var scriptSrc = path.join(EXTRA_SCRIPTS_DIR, path.basename(script));
-                    headerCode += "<script type=\"text/javascript\">";
+                    headerCode += getScriptOpenWithId();
                     headerCode += fs.readFileSync(scriptSrc);
                     headerCode += "</script>";
                 });
@@ -106,7 +125,7 @@ function getFooterString(jalangiRoot) {
             src = path.join(jalangiRoot, src);
         }
         if (endsWith(src, ".js")) {
-            footerCode += "<script type=\"text/javascript\">";
+            footerCode += getScriptOpenWithId();
             footerCode += fs.readFileSync(src);
             footerCode += "</script>";
         } else {
@@ -128,7 +147,10 @@ function genInitParamsCode(initParams) {
             initParamsObj[split[0]] = split[1];
         });
     }
-    return "<script>J$.initParams = " + JSON.stringify(initParamsObj) + ";</script>";
+    var ret = getScriptOpenWithId();
+    ret += "J$.initParams = " + JSON.stringify(initParamsObj) + ";</script>";
+    return ret;
+    //return "<script>J$.initParams = " + JSON.stringify(initParamsObj) + ";</script>";
 }
 
 function applyASTHandler(instResult, astHandler, sandbox, metadata) {
@@ -175,7 +197,8 @@ function getHeaderCodeAsScriptTags(root) {
             src = path.join(root, src);
         }
         src = path.resolve(src);
-        ret += "<script src=\"" + src + "\"></script>";
+        ret += getScriptOpenWithId(src); + "</script>";
+        //ret += "<script src=\"" + src + "\"></script>";
     });
     return ret;
 }
