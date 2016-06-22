@@ -132,13 +132,16 @@ function genInitParamsCode(initParams) {
 }
 
 function applyASTHandler(instResult, astHandler, sandbox, metadata) {
+    //if (astHandler && instResult.instAST) {
+    //    var info = astHandler(instResult.instAST, instResult, metadata);
+    //    if (info) {
+    //        instResult.code = sandbox.Constants.JALANGI_VAR + ".ast_info = " + JSON.stringify(info) + ";\n" + instResult.code;
+    //    }
+    //}
+    //return instResult.code;
     if (astHandler && instResult.instAST) {
-        var info = astHandler(instResult.instAST, instResult, metadata);
-        if (info) {
-            instResult.code = sandbox.Constants.JALANGI_VAR + ".ast_info = " + JSON.stringify(info) + ";\n" + instResult.code;
-        }
+        return astHandler(instResult.instAST, instResult, metadata);
     }
-    return instResult.code;
 }
 
 function headerCodeInit(root) {
