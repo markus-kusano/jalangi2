@@ -1877,6 +1877,26 @@ if (typeof J$ === 'undefined') {
         return newAst;
     }
 
+    function transformAst(newAst, visitorsPost, visitorsPre) {
+//         StatCollector.resumeTimer("parse");
+//        console.time("parse")
+//        var newAst = esprima.parse(code, {loc:true, range:true});
+        //var newAst = acorn.parse(code, {locations: true, ecmaVersion: 6 });
+//        console.timeEnd("parse")
+//        StatCollector.suspendTimer("parse");
+//        StatCollector.resumeTimer("transform");
+//        console.time("transform")
+        addScopes(newAst);
+        var len = visitorsPost.length;
+        for (var i = 0; i < len; i++) {
+            newAst = astUtil.transformAst(newAst, visitorsPost[i], visitorsPre[i], astUtil.CONTEXT.RHS);
+        }
+//        console.timeEnd("transform")
+//        StatCollector.suspendTimer("transform");
+//        console.log(JSON.stringify(newAst,null,"  "));
+        return newAst;
+    }
+
     // if this string is discovered inside code passed to instrumentCode(),
     // the code will not be instrumented
     var noInstr = "// JALANGI DO NOT INSTRUMENT";
@@ -1936,12 +1956,22 @@ if (typeof J$ === 'undefined') {
         if (!skip && typeof code === 'string' && code.indexOf(noInstr) < 0) {
             try {
                 code = removeShebang(code);
+                var newAst = acorn.parse(code, {
+                    allowReturnOutsideFunction: options.allowReturnOutsideFunction,
+                    ecmaVersion: 6,
+                    locations: true,
+                    onComment: function (block, text, start, end) {
+                        // "JALANGI DO NOT INSTRUMENT" could be in a JavaScript string literal, it must be a comment
+                        if (text.trim() === noInstr) {
+                            instrument = false;
+                        }
+                    }
+                });
                 iidSourceInfo = {};
-                var newAst;
                 if (Config.ENABLE_SAMPLING) {
-                    newAst = transformString(code, [visitorCloneBodyPre, visitorRRPost, visitorOps, visitorMergeBodyPre], [undefined, visitorRRPre, undefined, undefined]);
+                    newAst = transformAst(newAst, [visitorCloneBodyPre, visitorRRPost, visitorOps, visitorMergeBodyPre], [undefined, visitorRRPre, undefined, undefined]);
                 } else {
-                    newAst = transformString(code, [visitorRRPost, visitorOps], [visitorRRPre, undefined]);
+                    newAst = transformAst(newAst, [visitorRRPost, visitorOps], [visitorRRPre, undefined]);
                 }
                 // post-process AST to hoist function declarations (required for Firefox)
                 var hoistedFcts = [];

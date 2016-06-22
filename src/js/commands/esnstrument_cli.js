@@ -88,6 +88,7 @@ if (typeof J$ === 'undefined') {
                     {
                         code: src,
                         isEval: false,
+                        allowReturnOutsideFunction: metadata.type === 'event-handler' || metadata.type === 'javascript-url',
                         origCodeFileName: sanitizePath(origname),
                         instCodeFileName: sanitizePath(instname),
                         inlineSourceMap: inlineIID,
@@ -197,6 +198,7 @@ if (typeof J$ === 'undefined') {
                 {
                     code: origCode,
                     isEval: false,
+                    allowReturnOutsideFunction: false,
                     origCodeFileName: sanitizePath(fileName),
                     instCodeFileName: sanitizePath(instFileName),
                     inlineSourceMap: inlineIID,

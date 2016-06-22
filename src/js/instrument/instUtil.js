@@ -140,8 +140,12 @@ function applyASTHandler(instResult, astHandler, sandbox, metadata) {
     //}
     //return instResult.code;
     if (astHandler && instResult.instAST) {
-        return astHandler(instResult.instAST, instResult, metadata);
+        instResult.code = astHandler(instResult.instAST, instResult, metadata);
     }
+    if (!instResult.code) {
+      instResult.code = esotope.generate(instResult.instAST, {comment: true, format: esotope.FORMAT_MINIFY});
+    }
+    return instResult.code;
 }
 
 function headerCodeInit(root) {
