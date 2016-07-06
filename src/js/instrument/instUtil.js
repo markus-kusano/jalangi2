@@ -49,7 +49,6 @@ function setHeaders() {
 // Get a script open string with a fresh jalangi ID
 // If src is defined it will be the src attribute in the tag
 function getScriptOpenWithId(src) {
-  console.log("****** getting script ID ******");
   var fresh = jalangiId;
   jalangiId++;
   var ret = "<script data-jal-id= \"" + fresh + "\" type=\"text/javascript\"";
