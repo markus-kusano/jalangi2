@@ -1915,8 +1915,8 @@ if (typeof J$ === 'undefined') {
 
 
     function instrumentEvalCode(code, iid, isDirect) {
-      console.error("instrumenting eval code");
-      console.log(code);
+      //console.error("instrumenting eval code");
+      //console.log(code);
         return instrumentCode({
             code: code,
             thisIid: iid,
@@ -1934,16 +1934,16 @@ if (typeof J$ === 'undefined') {
         return code;
     }
 
-    var getSrc = function(c, n) {
-      return c.slice(n.start, n.end).join('')
-    }
+  var getSrc = function(c, n) {
+    return c.slice(n.start, n.end).join('')
+  }
 
-    var update = function(n, c, s) {
-        c[node.start] = s;
-        for (var i = n.start + 1; i < n.end; i++) {
-            c[i] = '';
-        }
-    }
+  var update = function(n, c, s) {
+      c[n.start] = s;
+      for (var i = n.start + 1; i < n.end; i++) {
+          c[i] = '';
+      }
+  }
 
   // Given an AST node make all top level variable declarations be explicitly
   // on the window object.
@@ -1970,30 +1970,29 @@ if (typeof J$ === 'undefined') {
     //  return;
     //}
     // Largely adapted from Christoffer's instrument-js.js
-    var decls = [];
-    //var clears = [];
     var assignments = [];
+    var innerDecls = [];
+    var clears = [];
     for (var i = 0, n = node.declarations.length; i < n; ++i) {
       var decl = node.declarations[i];
       console.log("decl:", decl);
-      //var id = decl.id.source();
-      // Black magic????
-      //var id = chunks.slice(decl.start, decl.end).join('')
+
       var id = getSrc(chunks, decl.id);
-      // decls.push(id + ' = window.' + id);
-      //clears.push(id + ' = undefined || window.' + id);
       console.log("  decl.init", decl.init);
       console.log('  id:', id);
+      clears.push(id + ' = undefined || window.' + id);
       if (decl.init) {
         var initSrc = getSrc(chunks, decl.init);
+        assignments.push(id + ' = ' + initSrc);
         //assignments.push(id + ' = ' + decl.init.source());
-        var newInit =  "window." + id + ' = ' + initSrc;
-        console.log("lifted to:", newInit);
-        assignments.push(newInit);
+        //var newInit =  "window." + id + ' = ' + initSrc;
+        //var newInit =  id + " = undefined || window." + id;
+        //console.log("lifted to:", newInit);
+        //assignments.push(newInit);
       }
     }
     // result.push('var ' + decls.join(', ') + ';');
-    //innerDecls.push(clears.join(', ') + ';');
+    innerDecls.push(clears.join(', ') + ';');
     if (assignments.length) {
       // Only add a trailing semicolon if it is not a variable
       // declaration in a for statement
@@ -2008,14 +2007,15 @@ if (typeof J$ === 'undefined') {
              || (node.parent && node.parent.type === "ForOfStatement")) {
       //node.update(node.declarations[0].id.source());
       //node.update(getSrc(chunks, node.declarations[0].id));
-      node(node, chunks, getSrc(chunks, node.declarations[0].id));
+      update(node, chunks, getSrc(chunks, node.declarations[0].id));
     } 
     else {
       //node.update('');
       update(node, chunks, '');
     }
+    console.log("innerDecls:", innerDecls.join(''));
     // assumption: only `node` in chunks was modified
-    return acorn.parse(getSrc(chunks, node));
+    return acorn.parse(innerDecls.join('') + getSrc(chunks, node));
   } // function hoist()
 
   var hoistFuncDec = function(src, node) {
@@ -2023,7 +2023,7 @@ if (typeof J$ === 'undefined') {
       console.log("  node without scope:");
       return node;
     }
-    console.log("node:", node);
+    //console.log("node:", node);
     // The scope of a FunctionDeclaration is its own scope
     if (!(node.scope.parent)) {
       throw "FunctionDeclaration node without parent scope";
@@ -2034,17 +2034,25 @@ if (typeof J$ === 'undefined') {
       return node;
     }
     var chunks = src.split('');
-    console.log("checking functiondeclaration");
+    //console.log("checking functiondeclaration");
 
-    console.log("func dec:", node);
+    //console.log("func dec:", node);
+    if (!(node.id.type === "Identifier")) {
+      throw "FunctionDeclaration without ID identifier";
+    }
     if (!node.id.name) {
       throw "FunctionDeclaration without identifier name";
     }
 
-    // Simply add a window.<id> = function <id>() { }
-    // infront 
+    // add a window.<id> = <id> at the top of the source
 
-    return node;
+    //var decSrc = getSrc(chunks, node);
+    var id = node.id.name;
+    //var newSrc = "window." + decName + " = " + decSrc;
+    //console.warn("new func dec:", newSrc);
+    //update(node, chunks, newSrc);
+    var ass = 'window.' + id + ' = ' + id + ';';
+    return acorn.parse(ass + getSrc(chunks, node));
   }
 
     /**
@@ -2091,8 +2099,13 @@ if (typeof J$ === 'undefined') {
                 });
 
                 addScopes(newAst);
+                // TODO: there should really be some additional command line
+                // argument control whether or not to lift function
+                // declarations: it does it all the time when really it should
+                // only do it when the underlying analysis needs it.
                 if (isEval && newAst.scope && newAst.scope.parent == null && !options.allowReturnOutsideOfFunction) {
-                  console.error("wrapping top-level eval in non-event handler");
+                  console.error("Wrapping eval code:");
+                  console.warn(code);
                   var visitor = { 
                     'VariableDeclaration' : hoistVarDec.bind(null, code) 
                     , 'FunctionDeclaration' : hoistFuncDec.bind(null, code)
