@@ -2155,6 +2155,13 @@ if (typeof J$ === 'undefined') {
             instCode = JALANGI_VAR + ".iids = " + JSON.stringify(tmp) + ";\n" + code;
         }
 
+        // Make sure that the returned code and returned AST are consistent.
+        newAst = acorn.parse(instCode
+            , { allowReturnOutsideFunction: options.allowReturnOutsideFunction
+                , ecmaVersion: 6
+                , locations: true
+               });
+
         if (isEval && sandbox.analysis && sandbox.analysis.instrumentCode) {
             aret = sandbox.analysis.instrumentCode(thisIid, instCode, newAst, options.isDirect);
             if (aret) {
