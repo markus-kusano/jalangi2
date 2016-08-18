@@ -1957,15 +1957,12 @@ if (typeof J$ === 'undefined') {
   // src is the source code of the entire program.
   var hoistVarDec = function(src, node) {
     if (!node.scope) {
-      console.log("  node without scope:");
       return node;
     }
     if (!(node.scope.parent === null)) {
-      console.log("   not top level");
       return node;
     }
     var chunks = src.split('');
-    console.log("checking VariableDeclaration");
     //if (!(node.type === 'VariableDeclaration')) {
     //  return;
     //}
@@ -1975,11 +1972,8 @@ if (typeof J$ === 'undefined') {
     var clears = [];
     for (var i = 0, n = node.declarations.length; i < n; ++i) {
       var decl = node.declarations[i];
-      console.log("decl:", decl);
 
       var id = getSrc(chunks, decl.id);
-      console.log("  decl.init", decl.init);
-      console.log('  id:', id);
       clears.push(id + ' = undefined || window.' + id);
       if (decl.init) {
         var initSrc = getSrc(chunks, decl.init);
@@ -2013,7 +2007,6 @@ if (typeof J$ === 'undefined') {
       //node.update('');
       update(node, chunks, '');
     }
-    console.log("innerDecls:", innerDecls.join(''));
     // assumption: only `node` in chunks was modified
     return acorn.parse(innerDecls.join('') + getSrc(chunks, node));
   } // function hoist()
@@ -2104,8 +2097,7 @@ if (typeof J$ === 'undefined') {
                 // declarations: it does it all the time when really it should
                 // only do it when the underlying analysis needs it.
                 if (isEval && newAst.scope && newAst.scope.parent == null && !options.allowReturnOutsideOfFunction) {
-                  console.error("Wrapping eval code:");
-                  console.warn(code);
+                  //console.warn(code);
                   var visitor = { 
                     'VariableDeclaration' : hoistVarDec.bind(null, code) 
                     , 'FunctionDeclaration' : hoistFuncDec.bind(null, code)
